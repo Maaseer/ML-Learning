@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 
-from ThreeLayerNN import ThreeLayerNeuralNetwork
+from TwoLayerNN import TwoLayerNeuralNetwork
 from planar_utils import plot_decision_boundary, load_planar_dataset
 from testCases import *
 
 # 加载数据
 X, Y = load_planar_dataset()
 # 实例化神经网络对象
-NN = ThreeLayerNeuralNetwork(X, Y, hidden_size=10, learning_rate=0.5, num_iterations=20000)
+NN = TwoLayerNeuralNetwork(X, Y, hidden_size=5, learning_rate=0.5, num_iterations=20000)
 # 训练
 NN.learning()
 # 预测

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class ThreeLayerNeuralNetwork:
+class TwoLayerNeuralNetwork:
     """
     各层节点数
     """

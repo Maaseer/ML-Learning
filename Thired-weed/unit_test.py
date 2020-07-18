@@ -1,5 +1,5 @@
 import unittest
-import ThreeLayerNN as NN
+import TwoLayerNN as NN
 import numpy as np
 
 
@@ -8,7 +8,7 @@ class MyTestCase(unittest.TestCase):
         in_data = np.random.randn(100, 100)
         out_data = np.random.randn(3, 100) * 10 % 1
 
-        N = NN.ThreeLayerNeuralNetwork(in_data, out_data)
+        N = NN.TwoLayerNeuralNetwork(in_data, out_data)
         # self.assertEqual(True, False)
 
         self.assertEqual(N.input_size, 100)
