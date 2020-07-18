@@ -35,8 +35,8 @@ class ThreeLayerNeuralNetwork:
     """
     lost = []
 
-    def __init__(self, train_data, train_value, learning_rate=0.01, num_iterations=1000):
-        self.input_size, self.hidden_size, self.output_size = self.layer_sizes(train_data, train_value)
+    def __init__(self, train_data, train_value, hidden_size=4, learning_rate=0.01, num_iterations=1000):
+        self.input_size, self.hidden_size, self.output_size = self.layer_sizes(train_data, train_value, hidden_size)
 
         self.input_hidden_w, self.hidden_output_w, self.hidden_b, self.output_b = self.init_para(self.input_size,
                                                                                                  self.hidden_size,
@@ -93,27 +93,30 @@ class ThreeLayerNeuralNetwork:
         """
 
         z1 = np.dot(self.input_hidden_w.T, self.train_data)
+        # print(z1)
         z1 = z1 + self.hidden_b
+        # print(z1)
         a1 = np.tanh(z1)
         # print("-------------------------")
         # print(a1.shape)
-        z2 = np.dot(self.hidden_output_w.T, a1)
-        z2 = z2 + self.output_b
+        z2 = np.dot(self.hidden_output_w.T, a1) + self.output_b
+        a2 = self.sigmoid(z2)
         # print("--------------------")
         # print(z2.shape)
-        #
-        a2 = self.sigmoid(z2)
+
         self.cache['z1'] = z1
         self.cache['z2'] = z2
         self.cache['a1'] = a1
         self.cache['a2'] = a2
+
         return a2
 
     @staticmethod
     def lost_calc(src, tar, m):
-        cost = np.multiply(np.log(src), tar) + np.multiply(1 - tar, np.log(1 - src))
-        cost = (1 / m) * np.sum(cost, 1)
-        return cost
+        lost = tar * np.log(src) + (1 - tar) * np.log(1 - src)
+        # lost = np.multiply(np.log(src), tar) + np.multiply(1 - tar, np.log(1 - src))
+        lost = (-1.0 / m) * np.sum(lost, 1)
+        return lost
 
     def back_propagation(self):
         """
@@ -125,42 +128,52 @@ class ThreeLayerNeuralNetwork:
         dz1 = np.multiply(np.dot(self.hidden_output_w, dz2), 1 - np.power(self.cache['a1'], 2))
 
         # print(dz.shape)
-
-        dw2 = (1 / self.m) * np.dot(dz2, self.cache['a1'].T)
-        dw2 = dw2.T
-
-        db2 = (1 / self.m) * np.sum(dz2, 1, keepdims=True)
+        dw2 = (1.0 / self.m) * np.dot(dz2, self.cache['a1'].T).T
+        db2 = (1.0 / self.m) * np.sum(dz2, 1, keepdims=True)
 
         # print(db2)
-        dw1 = (1 / self.m) * np.dot(dz1, self.train_data.T).T
-        db1 = (1 / self.m) * np.sum(dz1, 1, keepdims=True)
+        dw1 = (1.0 / self.m) * np.dot(dz1, self.train_data.T).T
+        db1 = (1.0 / self.m) * np.sum(dz1, 1, keepdims=True)
         # print("##############")
         # print(dw2.shape)
 
-        self.hidden_output_w = self.hidden_output_w + dw2 * self.learning_rate
+        self.hidden_output_w = self.hidden_output_w - dw2 * self.learning_rate
         self.output_b = self.output_b - db2 * self.learning_rate
 
-        self.input_hidden_w = self.input_hidden_w + dw1 * self.learning_rate
+        self.input_hidden_w = self.input_hidden_w - dw1 * self.learning_rate
         self.hidden_b = self.hidden_b - db1 * self.learning_rate
-        # self.hidden_b = reduce1 * self.learning_rate
-
-        return 0
 
     def learning(self):
+        """
+        使神经网络开始学习
+        :return:
+        """
         for i in range(self.num_iterations):
             self.forward_propagation()
             lost = self.lost_calc(self.cache['a2'], self.train_value, self.m)
             self.lost.append(lost)
             self.back_propagation()
+
             if i % 100 == 0:
-                print(self.hidden_output_w)
+                # print(self.hidden_output_w)
                 print("迭代次数：", i, "损失值：", lost)
 
     def predict(self, predict_data):
-        z1 = np.dot(self.input_hidden_w.T, predict_data)
-        a1 = np.tanh(z1) + self.hidden_b
-        z2 = np.dot(self.hidden_output_w.T, a1)
-        a2 = self.sigmoid(z2) + self.output_b
-
+        """
+        预测给定参数的值
+        :param predict_data: 2xm的矩阵，意为点的坐标
+        :return:1xm的矩阵，由0和1组成，意为该店的预测颜色
+        """
+        z1 = np.dot(self.input_hidden_w.T, predict_data) + self.hidden_b
+        a1 = np.tanh(z1)
+        z2 = np.dot(self.hidden_output_w.T, a1) + self.output_b
+        a2 = self.sigmoid(z2)
+        # print(a2)
+        # print(self.input_hidden_w)
+        # print(self.hidden_output_w)
+        # print(self.hidden_b)
+        # print(self.output_b)
+        # print(a2)
         predictions = np.round(a2)
+
         return predictions
