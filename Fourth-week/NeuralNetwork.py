@@ -123,7 +123,6 @@ class NeuralNetwork:
         :param tar: 目标值
         :return:
         """
-        # print(tar.shape)
         lost = tar * np.log(src) + (1 - tar) * np.log(1 - src)
         lost = (-1.0 / tar.shape[1]) * np.sum(lost, 1)
         return lost
