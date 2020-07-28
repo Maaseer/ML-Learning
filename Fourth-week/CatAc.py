@@ -14,8 +14,8 @@ test_x = test_x_flatten / 255
 test_y = test_set_y
 # print(train_x.shape)
 # print(train_y.shape)
-NN = NeuralNetwork(train_x, train_y, learning_rate=0.005, num_iterations=2600,
-                   layers_dim=[test_x.shape[0], 10, test_y.shape[0]])
+NN = NeuralNetwork(train_x, train_y, learning_rate=0.05, num_iterations=600,
+                   layers_dim=[test_x.shape[0], 1000, 100, 10, test_y.shape[0]])
 
 NN.learning()
 result_test = NN.predict(test_x)
@@ -29,5 +29,5 @@ accuracy_train = np.round(accuracy_train, 2)
 
 print(f"训练集预测准确率：{accuracy_train}%\n测试集预测准确率：{accuracy_test}%")
 plt.plot(NN.lost)
-plt.title(f"h_size:{NN.hidden_size},l_rate: {NN.learning_rate},train:{accuracy_train}%, test:{accuracy_test}%")
+plt.title(f"l_rate: {NN.learning_rate},train:{accuracy_train}%, test:{accuracy_test}%\n{NN.layers_dim}")
 plt.show()
