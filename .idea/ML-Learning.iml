@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/Thired-week" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Fourth-week" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Fifth-week" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Steam-act" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
     <orderEntry type="inheritedJdk" />

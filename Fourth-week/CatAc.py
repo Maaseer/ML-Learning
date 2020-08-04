@@ -12,6 +12,7 @@ train_x = train_x_flatten / 255
 train_y = train_set_y
 test_x = test_x_flatten / 255
 test_y = test_set_y
+print(train_y.shape)
 # print(train_x.shape)
 # print(train_y.shape)
 NN = NeuralNetwork(train_x, train_y, learning_rate=0.05, num_iterations=600,

@@ -24,6 +24,7 @@ class NeuralNetwork:
     learning_rate = 0.01
     num_iterations = 1000
     lambd = 0
+    dropout_rate = 1
     """
     权重和偏移量矩阵字典
     """
@@ -35,7 +36,7 @@ class NeuralNetwork:
 
     def __init__(self, train_data=np.random.randn(2, 2), train_value=np.random.randn(2, 1),
                  learning_rate=0.01,
-                 num_iterations=1000, lambd=0,
+                 num_iterations=1000, lambd=0, dropout_rate=1,
                  layers_dim=None):
         """
 
@@ -44,12 +45,14 @@ class NeuralNetwork:
         :param learning_rate: 学习率，缺省为0.01
         :param num_iterations: 迭代次数，缺省为1000
         :param lambd: L2正则化的参数，缺省则关闭正则化
+        :param dropout_rate: dropout概率
         :param layers_dim: 各层节点的数量
         """
         self.layers_dim = layers_dim
         self.init_para(layers_dim=layers_dim)
         self.m = train_data.shape[1]
         self.lambd = lambd
+        self.dropout_rate = dropout_rate
         self.train_data = train_data
         self.train_value = train_value
         self.learning_rate = learning_rate
@@ -66,6 +69,7 @@ class NeuralNetwork:
         # print(len(layers_dim))
         for i in range(1, len(layers_dim)):
             # print(i)
+            # print(layers_dim)
             t = np.random.randn(layers_dim[i - 1], layers_dim[i]) * np.sqrt(
                 (2 / layers_dim[i - 1]))
             t = t % 1
@@ -94,8 +98,14 @@ class NeuralNetwork:
 
     @staticmethod
     def sigmoid_bac(da, z):
+        # print(z.max)
+        # print(f"da:{da.shape}")
+        # print(f"z:{z.shape}")
         s = 1 / (1 + np.exp(-z))
-        dZ = da * s * (1 - s)
+        # print(f"s:{s.shape}")
+        dZ = np.multiply(da, np.multiply(s, (1 - s)))
+        # dZ = da * s * (1 - s)
+        # print(f"dz:{dZ.shape}")
         return dZ
 
     @staticmethod
@@ -113,17 +123,22 @@ class NeuralNetwork:
         """
         # print(src)
         # print(tar)
-        src = src * 0.99999999
-
-        lost = tar * np.log(src) + (1 - tar) * np.log(1 - src)
-        lost = (-1.0 / tar.shape[1]) * np.sum(lost, 1)
-
+        src = src * 0.99
+        # print(src.shape)
+        # lost = tar * np.log(src) + (1 - tar) * np.log(1 - src)
+        # lost = (-1.0 / tar.shape[1]) * np.sum(lost, 1)
+        lost = np.multiply(-np.log(src), tar) + np.multiply(-np.log(1 - src), 1 - tar)
         # 对lost值添加L2正则化
-        l2 = 0
-        for i in range(1, len(self.layers_dim) - 1):
-            l2 = l2 + np.sum(np.square(self.parameters["w" + str(i)]))
-        l2 = l2 * (1 / self.m) * (self.lambd / 2)
-        lost = lost + l2
+        a = 1
+        # print(self.m)
+        # print(lost.shape)
+        lost = (1. / self.m) * np.nansum(lost)
+        if self.lambd != 0:
+            l2 = 0
+            for i in range(1, len(self.layers_dim) - 1):
+                l2 = l2 + np.sum(np.square(self.parameters["w" + str(i)]))
+            l2 = l2 * (1 / self.m) * (self.lambd / 2)
+            lost = lost + l2
         return lost
 
     @staticmethod
@@ -135,6 +150,7 @@ class NeuralNetwork:
         :param b: 偏移量
         :return: 输出数据
         """
+        # print(b.shape)
         A = np.dot(w.T, A) + b
         return A
 
@@ -163,11 +179,17 @@ class NeuralNetwork:
         # print("forward_propagation")
         for i in range(1, length):
             w = self.parameters["w" + str(i)]
+
             # print(i)
             b = self.parameters["b" + str(i)]
             # print(b.shape)
             z = self.liner_forward(data, w, b)
             a = self.activation_forward(z, self.relu)
+            if self.dropout_rate != 1:
+                drop = np.random.rand(a.shape[0], a.shape[1])
+                drop = drop < self.dropout_rate
+                a = a * drop
+                a = a / self.dropout_rate
             self.cache["z" + str(i)] = z
             self.cache["a" + str(i)] = a
             data = a
@@ -182,6 +204,11 @@ class NeuralNetwork:
         self.cache["z" + str(length)] = z
         self.cache["a" + str(length)] = a
 
+        # print(f"data:{data.shape}")
+        # print(f"w:{h_o_w.shape}")
+        # print(f"b:{h_o_b.shape}")
+        # print(f"z:{z.shape}")
+        # print(f"a:{a.shape}")
         lost = self.lost_calc(a, self.train_value)
 
         return lost
@@ -198,7 +225,11 @@ class NeuralNetwork:
         m = dz.shape[1]
         dw = (1 / m) * np.dot(dz, a_prev.T).T
 
-        db = (1 / m) * np.sum(dz, 1, keepdims=True)
+        # db = (1 / m) * np.sum(dz, 1, keepdims=True)
+        db = (1 / m) * np.sum(dz, 1)
+        db = db.reshape(db.shape[0], 1)
+        # print(db.shape)
+        # print(db)
         da_prev = np.dot(w, dz)
         return dw, db, da_prev
 
@@ -210,8 +241,9 @@ class NeuralNetwork:
             # print(db)
             # print(dim_index)
             w = self.parameters["w" + str(dim_index)]
-            # L2正则化
-            dw = dw + (self.lambd / self.m) * w
+            if self.lambd != 0:
+                # L2正则化
+                dw = dw + (self.lambd / self.m) * w
             self.parameters["w" + str(dim_index)] = w - self.learning_rate * dw
             self.parameters["b" + str(dim_index)] = self.parameters["b" + str(dim_index)] - self.learning_rate * db
             dim_index -= 1
@@ -292,6 +324,6 @@ class NeuralNetwork:
         z = self.liner_forward(predict_data, h_o_w, h_o_b)
         result = self.activation_forward(z, self.sigmoid)
 
-        predictions = np.round(result)
+        # result = np.round(result)
 
-        return predictions
+        return result

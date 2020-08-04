@@ -1,18 +1,14 @@
-import numpy as np
 import matplotlib.pyplot as plt
-import sklearn
-import sklearn.datasets
 import init_utils
-from L2 import *
+from regularization import *
 import reg_utils
-import gc_utils
 
 # plt.rcParams['figure.figsize'] = (7.0, 4.0)  # set default size of plots
 # plt.rcParams['image.interpolation'] = 'nearest'
 # plt.rcParams['image.cmap'] = 'gray'
 train_x, train_y, test_x, test_y = reg_utils.load_2D_dataset(is_plot=False)
 # # plt.show()
-NN = NeuralNetwork(train_x, train_y, learning_rate=0.5, num_iterations=40000, lambd=0.5,
+NN = NeuralNetwork(train_x, train_y, learning_rate=0.5, num_iterations=40000, lambd=0,dropout_rate=0.5,
                    layers_dim=[train_x.shape[0], 20, 3, train_y.shape[0]])
 NN.learning()
 result_test = NN.predict(test_x)
