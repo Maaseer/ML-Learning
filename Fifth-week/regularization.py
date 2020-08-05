@@ -123,7 +123,7 @@ class NeuralNetwork:
         lost = np.multiply(-np.log(src), tar) + np.multiply(-np.log(1 - src), 1 - tar)
         # 对lost值添加L2正则化
         a = 1
-        lost = 1. / self.m * np.nansum(lost)
+        lost = (1. / self.m) * np.nansum(lost)
         if self.lambd != 0:
             l2 = 0
             for i in range(1, len(self.layers_dim) - 1):

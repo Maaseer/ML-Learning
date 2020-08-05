@@ -33,6 +33,8 @@ class NeuralNetwork:
     每次迭代的损失值
     """
     lost = []
+    train_SSE = []
+    test_SSE = []
 
     def __init__(self, train_data=np.random.randn(2, 2), train_value=np.random.randn(2, 1),
                  learning_rate=0.01,
@@ -153,6 +155,17 @@ class NeuralNetwork:
         # print(b.shape)
         A = np.dot(w.T, A) + b
         return A
+
+    @staticmethod
+    def MSE(src, tar):
+        """
+        计算均方差
+        :param src: 源数据
+        :param tar: 目标数据
+        :return:
+        """
+        SSE = (1 / src.shape[1]) * np.sum(np.square(tar - src))
+        return SSE
 
     @staticmethod
     def activation_forward(A, activation_fun):
@@ -289,7 +302,7 @@ class NeuralNetwork:
         # 统一更新权重矩阵
         self.update_parameters(dp)
 
-    def learning(self):
+    def learning(self, test_data=None, test_value=None):
         """
         使神经网络开始学习
         :return:
@@ -303,6 +316,17 @@ class NeuralNetwork:
             if i % 100 == 0:
                 # self.lost.append(lost)
                 print("迭代次数：", i, "损失值：", lost)
+
+                train_result = self.cache["a" + str(len(self.layers_dim)-1)]
+                train_SSE = self.MSE(train_result, self.train_value)
+                self.train_SSE.append(train_SSE)
+                print(f"训练集均方差：{train_SSE}")
+
+                if test_value is not None:
+                    test_result = self.predict(test_data)
+                    test_SSE = self.MSE(test_result, test_value)
+                    self.test_SSE.append(test_SSE)
+                    print(f"测试集均方差：{test_SSE}")
 
     def predict(self, predict_data):
         """

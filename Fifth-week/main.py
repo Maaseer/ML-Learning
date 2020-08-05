@@ -8,7 +8,7 @@ import reg_utils
 # plt.rcParams['image.cmap'] = 'gray'
 train_x, train_y, test_x, test_y = reg_utils.load_2D_dataset(is_plot=False)
 # # plt.show()
-NN = NeuralNetwork(train_x, train_y, learning_rate=0.5, num_iterations=40000, lambd=0,dropout_rate=0.5,
+NN = NeuralNetwork(train_x, train_y, learning_rate=0.5, num_iterations=40000, lambd=0,dropout_rate=1,
                    layers_dim=[train_x.shape[0], 20, 3, train_y.shape[0]])
 NN.learning()
 result_test = NN.predict(test_x)
