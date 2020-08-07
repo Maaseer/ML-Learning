@@ -178,7 +178,7 @@ class NeuralNetwork:
 
         return activation_fun(A)
 
-    def forward_propagation(self, data=None):
+    def forward_propagation(self, data=None, is_learning=True):
         """
         在hidden层使用Relu激活函数
         在output层使用sigmoid激活函数
@@ -198,11 +198,12 @@ class NeuralNetwork:
             # print(b.shape)
             z = self.liner_forward(data, w, b)
             a = self.activation_forward(z, self.relu)
-            if self.dropout_rate != 1:
+            if self.dropout_rate != 1 & is_learning:
                 drop = np.random.rand(a.shape[0], a.shape[1])
                 drop = drop < self.dropout_rate
-                a = a * drop
+                a = np.multiply(a, drop)
                 a = a / self.dropout_rate
+                self.cache["d" + str(i)] = drop
             self.cache["z" + str(i)] = z
             self.cache["a" + str(i)] = a
             data = a
@@ -294,6 +295,11 @@ class NeuralNetwork:
         dim_index -= 1
 
         while dim_index != 0:
+            if self.dropout_rate != 1:
+                drop = self.cache["d" + str(dim_index)]
+                da = np.multiply(da, drop)
+                da = da * self.dropout_rate
+
             dw, db, da = self.single_layer_back(da, dim_index, self.relu_bac)
             dp.append((dw, db))
             # print(dim_index)
@@ -317,7 +323,7 @@ class NeuralNetwork:
                 # self.lost.append(lost)
                 print("迭代次数：", i, "损失值：", lost)
 
-                train_result = self.cache["a" + str(len(self.layers_dim)-1)]
+                train_result = self.cache["a" + str(len(self.layers_dim) - 1)]
                 train_SSE = self.MSE(train_result, self.train_value)
                 self.train_SSE.append(train_SSE)
                 print(f"训练集均方差：{train_SSE}")

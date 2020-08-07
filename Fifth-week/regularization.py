@@ -25,10 +25,12 @@ class NeuralNetwork:
     num_iterations = 1000
     lambd = 0
     dropout_rate = 1
+    dropout_cache = {}
     """
     权重和偏移量矩阵字典
     """
     parameters = {}
+    dp = []
     """
     每次迭代的损失值
     """
@@ -180,8 +182,10 @@ class NeuralNetwork:
                 drop = drop < self.dropout_rate
                 a = a * drop
                 a = a / self.dropout_rate
+                self.cache["d" + str(i)] = drop
             self.cache["z" + str(i)] = z
             self.cache["a" + str(i)] = a
+
             data = a
 
         # a1 = self.activation_forward(z1, self.Relu)
@@ -208,9 +212,9 @@ class NeuralNetwork:
         :return:dw,db
         """
         m = dz.shape[1]
-        dw = (1 / m) * np.dot(dz, a_prev.T).T
+        dw = (1. / m) * np.dot(dz, a_prev.T).T
 
-        db = (1 / m) * np.sum(dz, 1, keepdims=True)
+        db = (1. / m) * np.sum(dz, 1, keepdims=True)
         da_prev = np.dot(w, dz)
         return dw, db, da_prev
 
@@ -221,6 +225,8 @@ class NeuralNetwork:
             # print(dw)
             # print(db)
             # print(dim_index)
+            if dim_index == 0:
+                return
             w = self.parameters["w" + str(dim_index)]
             if self.lambd != 0:
                 # L2正则化
@@ -233,8 +239,11 @@ class NeuralNetwork:
         a_prev = self.cache["a" + str(dim_index - 1)]
         w = self.parameters["w" + str(dim_index)]
         z = self.cache["z" + str(dim_index)]
+
         dz = back_activation(da, z)
         dw, db, da = self.liner_backward(a_prev, dz, w)
+        # print(f"da{dim_index}:{da.shape}")
+
         # print(dw)
         # print(db)
 
@@ -246,6 +255,28 @@ class NeuralNetwork:
         根据dz计算出da（下一层）、dw、db，并更新权重矩阵
         :return:
         """
+        # dim_size = len(self.layers_dim)
+        # dim_index = dim_size - 1
+        #
+        # a = self.cache["a" + str(dim_index)]
+        # # print("back_propagation")
+        #
+        # da = - (np.divide(self.train_value, a) - np.divide(1 - self.train_value, 1 - a))
+        # # da = - (self.train_value / a) - (1 - self.train_value) / (1 - a)
+        # dw, db, da = self.single_layer_back(da, dim_index, self.sigmoid_bac)
+        #
+        # self.dp.append((dw, db))
+        # # print(dim_index)
+        # dim_index -= 1
+        #
+        # while dim_index != 0:
+        #     dw, db, da = self.single_layer_back(da, dim_index, self.relu_bac)
+        #     self.dp.append((dw, db))
+        #     # print(dim_index)
+        #     dim_index -= 1
+        #
+        # # 统一更新权重矩阵
+        # self.update_parameters(self.dp)
         dim_size = len(self.layers_dim)
         dim_index = dim_size - 1
         dp = []
@@ -262,6 +293,11 @@ class NeuralNetwork:
         dim_index -= 1
 
         while dim_index != 0:
+            if self.dropout_rate != 1:
+                drop = self.cache["d" + str(dim_index)]
+                da = np.multiply(da, drop)
+                da = da * self.dropout_rate
+
             dw, db, da = self.single_layer_back(da, dim_index, self.relu_bac)
             dp.append((dw, db))
             # print(dim_index)

@@ -56,14 +56,15 @@ result_data = result_data / 13
 test_fo.close()
 test_fo.close()
 
-
-NN = NeuralNetwork(train_data, train_value, learning_rate=0.05, num_iterations=41000,lambd=0.15,
+NN = NeuralNetwork(train_data, train_value, learning_rate=0.1, num_iterations=35000, lambd=0, dropout_rate=0.9,
                    layers_dim=[train_data.shape[0], 10, 5, train_value.shape[0]])
+
 # print(train_value.shape)
-NN.learning(test_data,test_value)
+
+NN.learning(test_data, test_value)
 result = NN.predict(test_data)
 SSE = NN.MSE(result, test_value)
 print(f"测试集均方差：{SSE}")
 plt.plot(NN.test_SSE)
 plt.show()
-np.savetxt("results.txt",(NN.predict(result_data) * 6) - 3.1,delimiter='\n',fmt='%0.8f')
+np.savetxt("results.txt", (NN.predict(result_data) * 6) - 3.1, delimiter='\n', fmt='%0.8f')
